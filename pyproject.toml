@@ -1,5 +1,5 @@
 [project]
-name = "azure-devops-mcp"
+name = "azure-devops-mcp-server"
 version = "0.1.0"
 description = "MCP server exposing 41 Azure DevOps tools to AI assistants — pipelines, repos, PRs, boards, releases, tests, wikis"
 readme = "README.md"
