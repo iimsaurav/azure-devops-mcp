@@ -1,0 +1,75 @@
+# Virtual environments
+.venv/
+.venv*/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+*.whl
+*.tar.gz
+
+# Environment variables (contains secrets)
+.env
+
+# Token cache (user-specific credentials)
+token_cache.json
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# uv lock file (optional — remove this line if you want to track it)
+# uv.lock
+
+# Ad-hoc test scripts
+_test.py
+
+# Secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+credentials.json
+client_secret.json
+service_account.json
+
+# Local config overrides
+.env.local
+.env.*.local
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# Type checking
+.mypy_cache/
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Cortex / Gemini
+.gemini/
