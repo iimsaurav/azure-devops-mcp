@@ -27,13 +27,13 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that 
 ### From PyPI (recommended)
 
 ```bash
-pip install azure-devops-mcp
+pip install azure-devops-mcp-server
 ```
 
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv pip install azure-devops-mcp
+uv pip install azure-devops-mcp-server
 ```
 
 ### From source
@@ -51,7 +51,7 @@ After installing, follow these 3 steps:
 ### Step 1: Install
 
 ```bash
-pip install azure-devops-mcp
+pip install azure-devops-mcp-server
 ```
 
 ### Step 2: Add to your AI editor
@@ -167,7 +167,7 @@ Best for: registered Azure AD applications, service-to-service, automated workfl
 Best for: running on Azure VMs, App Service, Azure Functions, AKS. No credentials to manage.
 
 ```bash
-pip install azure-devops-mcp[managed-identity]
+pip install azure-devops-mcp-server[managed-identity]
 ```
 
 | Variable | Description |

@@ -10,7 +10,7 @@ An MCP (Model Context Protocol) server that exposes **41 Azure DevOps REST API t
 - **Package manager**: pip or [uv](https://docs.astral.sh/uv/)
 - **Build system**: Hatchling via `pyproject.toml`
 - **Transport**: MCP stdio (no HTTP server)
-- **PyPI**: `pip install azure-devops-mcp`
+- **PyPI**: `pip install azure-devops-mcp-server`
 
 ---
 
@@ -114,7 +114,7 @@ Detection logic is in `auth._detect_auth_method()`. The public API is `get_auth_
 
 - **PAT**: Returns `Basic` header. No token acquisition needed.
 - **Client Credentials**: Uses `msal.ConfidentialClientApplication` with cached tokens.
-- **Managed Identity**: Requires optional dep `azure-identity` (`pip install azure-devops-mcp[managed-identity]`).
+- **Managed Identity**: Requires optional dep `azure-identity` (`pip install azure-devops-mcp-server[managed-identity]`).
 - **Device Code**: Uses Azure DevOps first-party client ID (`872cd9fa-...`). No app registration needed. Token cached at `~/.azure-devops-mcp/token_cache.json`.
 
 ---
@@ -153,7 +153,7 @@ Loaded from `.env` via `python-dotenv` or passed via MCP client `env` config.
 
 ```bash
 # Install from PyPI
-pip install azure-devops-mcp
+pip install azure-devops-mcp-server
 
 # Run the server (as CLI command)
 azure-devops-mcp
