@@ -44,7 +44,7 @@ wheels = [
 ]
 
 [[package]]
-name = "azure-devops-mcp"
+name = "azure-devops-mcp-server"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
