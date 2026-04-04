@@ -14,8 +14,13 @@ def _get_org_url() -> str:
     return url.rstrip("/")
 
 
-def _api(method: str, url: str, params: dict | None = None, json_body: dict | list | None = None,
-         content_type: str = "application/json") -> dict | list:
+def _api(
+    method: str,
+    url: str,
+    params: dict | None = None,
+    json_body: dict | list | None = None,
+    content_type: str = "application/json",
+) -> dict | list:
     """Make an authenticated Azure DevOps REST API call with retry for 429/5xx."""
     import time
 
@@ -28,10 +33,12 @@ def _api(method: str, url: str, params: dict | None = None, json_body: dict | li
     max_retries = 3
     with httpx.Client(timeout=30) as client:
         for attempt in range(max_retries):
-            resp = client.request(method, url, headers=headers, params=base_params, json=json_body)
+            resp = client.request(
+                method, url, headers=headers, params=base_params, json=json_body
+            )
             if resp.status_code == 429 or resp.status_code >= 500:
                 if attempt < max_retries - 1:
-                    retry_after = float(resp.headers.get("Retry-After", 2 ** attempt))
+                    retry_after = float(resp.headers.get("Retry-After", 2**attempt))
                     time.sleep(retry_after)
                     continue
             resp.raise_for_status()
@@ -98,11 +105,22 @@ def get_board_work_items(project: str, board: str, team: str | None = None) -> d
         f"AND [System.State] <> 'Removed' "
         f"ORDER BY [System.ChangedDate] DESC"
     )
-    items = _query_and_fetch(project, wiql, top=200, fields=[
-        "System.Id", "System.Title", "System.State", "System.WorkItemType",
-        "System.AssignedTo", "System.AreaPath", "System.IterationPath",
-        "System.CreatedDate", "System.ChangedDate",
-    ])
+    items = _query_and_fetch(
+        project,
+        wiql,
+        top=200,
+        fields=[
+            "System.Id",
+            "System.Title",
+            "System.State",
+            "System.WorkItemType",
+            "System.AssignedTo",
+            "System.AreaPath",
+            "System.IterationPath",
+            "System.CreatedDate",
+            "System.ChangedDate",
+        ],
+    )
 
     return {
         "board": board_data.get("name"),
@@ -142,7 +160,11 @@ def get_work_item(project: str, work_item_id: int) -> dict:
         "changed_by": _format_identity(fields.get("System.ChangedBy")),
         "tags": fields.get("System.Tags"),
         "relations": [
-            {"rel": r.get("rel"), "url": r.get("url"), "attributes": r.get("attributes")}
+            {
+                "rel": r.get("rel"),
+                "url": r.get("url"),
+                "attributes": r.get("attributes"),
+            }
             for r in (relations or [])
         ],
     }
@@ -169,29 +191,61 @@ def create_work_item(
         {"op": "add", "path": "/fields/System.Title", "value": title},
     ]
     if description:
-        document.append({"op": "add", "path": "/fields/System.Description", "value": description})
+        document.append(
+            {"op": "add", "path": "/fields/System.Description", "value": description}
+        )
     if assigned_to:
-        document.append({"op": "add", "path": "/fields/System.AssignedTo", "value": assigned_to})
+        document.append(
+            {"op": "add", "path": "/fields/System.AssignedTo", "value": assigned_to}
+        )
     if area_path:
-        document.append({"op": "add", "path": "/fields/System.AreaPath", "value": area_path})
+        document.append(
+            {"op": "add", "path": "/fields/System.AreaPath", "value": area_path}
+        )
     if iteration_path:
-        document.append({"op": "add", "path": "/fields/System.IterationPath", "value": iteration_path})
+        document.append(
+            {
+                "op": "add",
+                "path": "/fields/System.IterationPath",
+                "value": iteration_path,
+            }
+        )
     if priority is not None:
-        document.append({"op": "add", "path": "/fields/Microsoft.VSTS.Common.Priority", "value": priority})
+        document.append(
+            {
+                "op": "add",
+                "path": "/fields/Microsoft.VSTS.Common.Priority",
+                "value": priority,
+            }
+        )
     if tags:
         document.append({"op": "add", "path": "/fields/System.Tags", "value": tags})
     if additional_fields:
         for field_path, value in additional_fields.items():
-            path = field_path if field_path.startswith("/fields/") else f"/fields/{field_path}"
+            path = (
+                field_path
+                if field_path.startswith("/fields/")
+                else f"/fields/{field_path}"
+            )
             document.append({"op": "add", "path": path, "value": value})
     if parent_id is not None:
         rel = _resolve_relation_type("parent")
         parent_url = f"{org_url}/{project}/_apis/wit/workItems/{parent_id}"
-        document.append({"op": "add", "path": "/relations/-", "value": {
-            "rel": rel, "url": parent_url, "attributes": {},
-        }})
+        document.append(
+            {
+                "op": "add",
+                "path": "/relations/-",
+                "value": {
+                    "rel": rel,
+                    "url": parent_url,
+                    "attributes": {},
+                },
+            }
+        )
 
-    data = _api("POST", url, json_body=document, content_type="application/json-patch+json")
+    data = _api(
+        "POST", url, json_body=document, content_type="application/json-patch+json"
+    )
     fields = data.get("fields", {})
     return {
         "id": data.get("id"),
@@ -212,11 +266,15 @@ def update_work_item(
     org_url = _get_org_url()
     url = f"{org_url}/{project}/_apis/wit/workitems/{work_item_id}"
 
-    document = []
+    document: list[dict] = []
     if fields:
         for field_name, value in fields.items():
-            path = field_name if field_name.startswith("/fields/") else f"/fields/{field_name}"
-            document.append({"op": "replace", "path": path, "value": value})
+            path = (
+                field_name
+                if field_name.startswith("/fields/")
+                else f"/fields/{field_name}"
+            )
+            document.append({"op": "add", "path": path, "value": value})
 
     if add_links:
         for link in add_links:
@@ -227,7 +285,12 @@ def update_work_item(
                 link_value["attributes"]["comment"] = link["comment"]
             document.append({"op": "add", "path": "/relations/-", "value": link_value})
 
-    data = _api("PATCH", url, json_body=document, content_type="application/json-patch+json")
+    if not document:
+        raise ValueError("At least one update operation is required.")
+
+    data = _api(
+        "PATCH", url, json_body=document, content_type="application/json-patch+json"
+    )
     fields_out = data.get("fields", {})
     return {
         "id": data.get("id"),
@@ -237,7 +300,11 @@ def update_work_item(
         "type": fields_out.get("System.WorkItemType"),
         "changed_date": fields_out.get("System.ChangedDate"),
         "relations": [
-            {"rel": r.get("rel"), "url": r.get("url"), "attributes": r.get("attributes")}
+            {
+                "rel": r.get("rel"),
+                "url": r.get("url"),
+                "attributes": r.get("attributes"),
+            }
             for r in (data.get("relations") or [])
         ],
     }
@@ -260,15 +327,29 @@ def _resolve_relation_type(link_type: str) -> str:
 
 def query_work_items(project: str, wiql_query: str) -> list[dict]:
     """Execute a WIQL query and return work item details."""
-    return _query_and_fetch(project, wiql_query, top=200, fields=[
-        "System.Id", "System.Title", "System.State", "System.WorkItemType",
-        "System.AssignedTo", "System.AreaPath", "System.IterationPath",
-        "System.Tags", "System.CreatedDate", "System.ChangedDate",
-        "Microsoft.VSTS.Common.Priority",
-    ])
+    return _query_and_fetch(
+        project,
+        wiql_query,
+        top=200,
+        fields=[
+            "System.Id",
+            "System.Title",
+            "System.State",
+            "System.WorkItemType",
+            "System.AssignedTo",
+            "System.AreaPath",
+            "System.IterationPath",
+            "System.Tags",
+            "System.CreatedDate",
+            "System.ChangedDate",
+            "Microsoft.VSTS.Common.Priority",
+        ],
+    )
 
 
-def _query_and_fetch(project: str, wiql: str, top: int = 200, fields: list[str] | None = None) -> list[dict]:
+def _query_and_fetch(
+    project: str, wiql: str, top: int = 200, fields: list[str] | None = None
+) -> list[dict]:
     """Run a WIQL query and batch-fetch the resulting work items."""
     org_url = _get_org_url()
 
@@ -297,7 +378,9 @@ def _query_and_fetch(project: str, wiql: str, top: int = 200, fields: list[str] 
             "title": wi.get("fields", {}).get("System.Title"),
             "state": wi.get("fields", {}).get("System.State"),
             "type": wi.get("fields", {}).get("System.WorkItemType"),
-            "assigned_to": _format_identity(wi.get("fields", {}).get("System.AssignedTo")),
+            "assigned_to": _format_identity(
+                wi.get("fields", {}).get("System.AssignedTo")
+            ),
             "area_path": wi.get("fields", {}).get("System.AreaPath"),
             "iteration_path": wi.get("fields", {}).get("System.IterationPath"),
             "priority": wi.get("fields", {}).get("Microsoft.VSTS.Common.Priority"),
@@ -309,7 +392,9 @@ def _query_and_fetch(project: str, wiql: str, top: int = 200, fields: list[str] 
     ]
 
 
-def get_work_item_comments(project: str, work_item_id: int, top: int = 50) -> list[dict]:
+def get_work_item_comments(
+    project: str, work_item_id: int, top: int = 50
+) -> list[dict]:
     """Get comments on a work item.
 
     Args:
@@ -368,10 +453,12 @@ def delete_work_item(project: str, work_item_id: int, destroy: bool = False) -> 
         params["destroy"] = "true"
     data = _api("DELETE", url, params=params)
     if isinstance(data, dict):
+        message = data.get("message") or "Work item deleted"
+        deleted_id = data.get("id") or work_item_id
         return {
-            "id": data.get("id"),
+            "id": deleted_id,
             "code": data.get("code"),
-            "message": data.get("message", "Work item deleted"),
+            "message": message,
         }
     return {"id": work_item_id, "message": "Work item deleted"}
 
@@ -390,22 +477,26 @@ def list_saved_queries(project: str, depth: int = 2) -> list[dict]:
     def _flatten_queries(node: dict) -> list[dict]:
         result = []
         if node.get("isFolder"):
-            result.append({
-                "id": node.get("id"),
-                "name": node.get("name"),
-                "path": node.get("path"),
-                "is_folder": True,
-            })
+            result.append(
+                {
+                    "id": node.get("id"),
+                    "name": node.get("name"),
+                    "path": node.get("path"),
+                    "is_folder": True,
+                }
+            )
             for child in node.get("children", []):
                 result.extend(_flatten_queries(child))
         else:
-            result.append({
-                "id": node.get("id"),
-                "name": node.get("name"),
-                "path": node.get("path"),
-                "is_folder": False,
-                "query_type": node.get("queryType"),
-            })
+            result.append(
+                {
+                    "id": node.get("id"),
+                    "name": node.get("name"),
+                    "path": node.get("path"),
+                    "is_folder": False,
+                    "query_type": node.get("queryType"),
+                }
+            )
         return result
 
     results = []
@@ -438,9 +529,9 @@ def run_saved_query(project: str, query_id: str) -> list[dict]:
     fetch_params = {
         "ids": ids_str,
         "fields": "System.Id,System.Title,System.State,System.WorkItemType,"
-                  "System.AssignedTo,System.AreaPath,System.IterationPath,"
-                  "System.Tags,System.CreatedDate,System.ChangedDate,"
-                  "Microsoft.VSTS.Common.Priority",
+        "System.AssignedTo,System.AreaPath,System.IterationPath,"
+        "System.Tags,System.CreatedDate,System.ChangedDate,"
+        "Microsoft.VSTS.Common.Priority",
     }
     data = _api("GET", items_url, params=fetch_params)
 
@@ -450,7 +541,9 @@ def run_saved_query(project: str, query_id: str) -> list[dict]:
             "title": wi.get("fields", {}).get("System.Title"),
             "state": wi.get("fields", {}).get("System.State"),
             "type": wi.get("fields", {}).get("System.WorkItemType"),
-            "assigned_to": _format_identity(wi.get("fields", {}).get("System.AssignedTo")),
+            "assigned_to": _format_identity(
+                wi.get("fields", {}).get("System.AssignedTo")
+            ),
             "area_path": wi.get("fields", {}).get("System.AreaPath"),
             "iteration_path": wi.get("fields", {}).get("System.IterationPath"),
             "priority": wi.get("fields", {}).get("Microsoft.VSTS.Common.Priority"),
