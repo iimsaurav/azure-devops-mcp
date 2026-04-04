@@ -15,7 +15,9 @@ def _get_org_url() -> str:
     return url.rstrip("/")
 
 
-def _api(method: str, url: str, params: dict | None = None, json_body: dict | None = None) -> dict | list:
+def _api(
+    method: str, url: str, params: dict | None = None, json_body: dict | None = None
+) -> dict | list:
     """Make an authenticated Azure DevOps REST API call with retry for 429/5xx."""
     headers = get_auth_header()
     headers["Content-Type"] = "application/json"
@@ -26,10 +28,12 @@ def _api(method: str, url: str, params: dict | None = None, json_body: dict | No
     max_retries = 3
     with httpx.Client(timeout=30) as client:
         for attempt in range(max_retries):
-            resp = client.request(method, url, headers=headers, params=base_params, json=json_body)
+            resp = client.request(
+                method, url, headers=headers, params=base_params, json=json_body
+            )
             if resp.status_code == 429 or resp.status_code >= 500:
                 if attempt < max_retries - 1:
-                    retry_after = float(resp.headers.get("Retry-After", 2 ** attempt))
+                    retry_after = float(resp.headers.get("Retry-After", 2**attempt))
                     time.sleep(retry_after)
                     continue
             resp.raise_for_status()
@@ -62,22 +66,28 @@ def list_test_runs(project: str, top: int = 25, state: str = "") -> list[dict]:
             "completed_date": r.get("completedDate"),
             "total_tests": r.get("totalTests"),
             "passed_tests": r.get("passedTests"),
-            "failed_tests": r.get("unanalyzedTests"),
+            "failed_tests": r.get("failedTests"),
             "url": r.get("webAccessUrl"),
             "build": {
                 "id": r.get("build", {}).get("id"),
                 "name": r.get("build", {}).get("name"),
-            } if r.get("build") else None,
+            }
+            if r.get("build")
+            else None,
             "release": {
                 "id": r.get("release", {}).get("id"),
                 "name": r.get("release", {}).get("name"),
-            } if r.get("release") else None,
+            }
+            if r.get("release")
+            else None,
         }
         for r in data.get("value", [])
     ]
 
 
-def get_test_run_results(project: str, run_id: int, top: int = 200, outcome: str = "") -> list[dict]:
+def get_test_run_results(
+    project: str, run_id: int, top: int = 200, outcome: str = ""
+) -> list[dict]:
     """Get test results for a specific test run.
 
     Args:
